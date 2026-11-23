@@ -53,7 +53,8 @@ Found by reverse engineering firmware MCM107 (Realtek RTD2738, MIPS16):
 - After a switch `kvm-switch.ps1` pre-sets `0xF3` to the other side. The hub does not
   move, but the next input change takes it along. So if one machine is off (the OSD
   then hides the USB menu), selecting the other input in the OSD also moves keyboard
-  and mouse. The OSD KVM entry therefore shows the other side; that is expected.
+  and mouse (tested). The tray re-arms `0xF3` after such an OSD change, so the way back
+  works the same. The OSD KVM entry therefore shows the other side; that is expected.
 - Auto mode (`0xF3=1`) switches to USB-C on input change but does not come back while
   the notebook stays connected, so it is not used.
 

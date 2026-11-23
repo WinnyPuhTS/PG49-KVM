@@ -155,7 +155,11 @@ if ($Keyboard) {
     $other = if ($Role -eq 'pc') { 'notebook' } else { 'pc' }
     $to = if ($now) { $Role } else { $other }
     # the other machine may have switched already; rewriting the input would re-sync the picture
-    if ((Get-KvmStatus) -like "$to*") { return }
+    # (e.g. OSD input change): only re-arm the KVM mode for the way back
+    if ((Get-KvmStatus) -like "$to*") {
+      [void][KvmSw]::SetAndVerify(0xF3, $(if ($to -eq 'notebook') { 2 } else { 3 }))
+      return
+    }
     Start-Switch $to
   })
   $follow.Start()
