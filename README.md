@@ -9,27 +9,36 @@ the picture.
 Copy this folder to the machine and double-click `install.cmd`, or run:
 
 ```powershell
-.\install.cmd pc         # desktop PC (DP + USB-B)
-.\install.cmd notebook   # notebook (USB-C)
+.\install.cmd -Role pc -PcInput dp          # desktop PC on DisplayPort + USB-B
+.\install.cmd -Role pc -PcInput hdmi        # desktop PC on HDMI + USB-B
+.\install.cmd -Role notebook -PcInput dp    # notebook (USB-C); PcInput = where the PC sits
 ```
 
-No admin rights needed. Installs to `%LOCALAPPDATA%\PG49-KVM` and adds Start Menu
-shortcuts in the folder "PG49 KVM".
+Without arguments the installer asks. No admin rights needed. Installs to
+`%LOCALAPPDATA%\PG49-KVM`, starts a tray icon at logon (task "PG49 KVM") and adds Start
+Menu shortcuts in the folder "PG49 KVM".
+
+**Tray icon:** green `N` = notebook, blue `P` = PC, amber = switching, gray `?` =
+unknown. Left click switches to the other side; right click opens a menu with both
+targets (current one checked) and Exit. Start it again via Start Menu > PG49 KVM >
+PG49 KVM Tray.
 
 | Hotkey | Effect |
 |---|---|
 | Ctrl+Alt+N | picture + USB to notebook (input USB-C) |
-| Ctrl+Alt+P | picture + USB to PC (input DP) |
+| Ctrl+Alt+P | picture + USB to PC (input DP or HDMI) |
 
 Hotkeys may need a re-login before they work.
 
-Typical use: on the PC press Ctrl+Alt+N; keyboard is now on the notebook; there press
-Ctrl+Alt+P to come back.
+On both machines the tray also follows a KVM switch made in the monitor OSD: the
+keyboard appears = picture to this machine, keyboard gone = picture to the other one.
+So the notebook takes the picture even while the PC is off. The installer picks the
+first keyboard behind the monitor's USB hub, so run it while the KVM is on that
+machine; pass `-Keyboard <USB instance id>` to choose another device.
 
-Role `pc` also installs the task "PG49 KVM Follow" (`kvm-follow.ps1`): if the KVM is
-switched in the monitor OSD instead, the picture follows (keyboard gone = USB-C,
-keyboard back = DP). It watches one specific keyboard; change `-Keyboard` in
-`kvm-follow.ps1` for another device. Log: `%TEMP%\kvm-follow.log`.
+The tray checks GitHub (`main`) for new versions 1 minute after start, then daily, and
+via right click > Check for updates. Changed scripts are replaced and the tray
+restarts. A copy running from a git checkout is never updated.
 
 Uninstall: `uninstall.cmd`.
 
@@ -41,8 +50,13 @@ Found by reverse engineering firmware MCM107 (Realtek RTD2738, MIPS16):
 - VCP `0xF3` = KVM mode: `1` auto, `2` USB-B, `3` USB-C.
 - Writing `0xF3` alone only stores the value; the hub switches on the **next input
   change**. So `kvm-switch.ps1` writes `0xF3` first, then `0x60`.
+- After a switch `kvm-switch.ps1` pre-sets `0xF3` to the other side. The hub does not
+  move, but the next input change takes it along. So if one machine is off (the OSD
+  then hides the USB menu), selecting the other input in the OSD also moves keyboard
+  and mouse. The OSD KVM entry therefore shows the other side; that is expected.
 - Auto mode (`0xF3=1`) switches to USB-C on input change but does not come back while
   the notebook stays connected, so it is not used.
 
 Requirements: DDC/CI enabled in the OSD, Windows PowerShell 5.1. Tested on both
-sides: the PC (DP + USB-B) and the notebook (DDC over the USB-C cable).
+sides: the PC (DP + USB-B) and the notebook (DDC over the USB-C cable). The HDMI path
+uses the same mechanism but is not tested yet.
