@@ -23,12 +23,17 @@ if (-not $PcInput) {
 # Keyboard behind the monitor's USB hub (Realtek VID_0BDA&PID_541x): its USB device is
 # the one whose parent is that hub. Only present while the KVM is on this machine.
 if (-not $Keyboard) {
-  foreach ($k in Get-PnpDevice -Class Keyboard -PresentOnly) {
+  Write-Host 'Looking for a keyboard behind the monitor hub...'
+  $ProgressPreference = 'SilentlyContinue'
+  # one bulk query for all parents; per-device calls take ~1 s each
+  $parent = @{}
+  Get-PnpDeviceProperty -InstanceId (Get-PnpDevice -PresentOnly).InstanceId -KeyName DEVPKEY_Device_Parent -EA 0 |
+    ForEach-Object { $parent[$_.InstanceId] = $_.Data }
+  foreach ($k in @(Get-PnpDevice -Class Keyboard -PresentOnly)) {
     $id = $k.InstanceId
     for ($i = 0; $id -and $i -lt 10; $i++) {
-      $parent = (Get-PnpDeviceProperty -InstanceId $id -KeyName DEVPKEY_Device_Parent -EA 0).Data
-      if ($parent -match '^USB\\VID_0BDA&PID_541') { $Keyboard = $id; break }
-      $id = $parent
+      if ($parent[$id] -match '^USB\\VID_0BDA&PID_541') { $Keyboard = $id; break }
+      $id = $parent[$id]
     }
     if ($Keyboard) { break }
   }
