@@ -87,11 +87,14 @@ function Update-Kvm([bool]$Manual) {
     return
   }
   try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $new = @{}
+    $tmp = Join-Path $env:TEMP 'pg49-kvm-update.tmp'
     foreach ($f in 'kvm-switch.ps1', 'kvm-tray.ps1') {
-      $c = (Invoke-WebRequest "$repoRaw/$f" -UseBasicParsing -TimeoutSec 15).Content
-      if ($c -notmatch '^# kvm-') { throw "unexpected content for $f" }   # no HTML error pages
+      # curl.exe ships with Windows 10 1803+; Invoke-WebRequest can hang on proxy detection
+      & curl.exe -sfL -m 20 -o $tmp "$repoRaw/$f"
+      if ($LASTEXITCODE) { throw "download of $f failed (curl $LASTEXITCODE)" }
+      $c = Get-Content $tmp -Raw
+      if ($c -notmatch '^# kvm-') { throw "unexpected content for $f" }
       $c = $c -replace "`r`n", "`n"
       $local = (Get-Content (Join-Path $PSScriptRoot $f) -Raw) -replace "`r`n", "`n"
       if ($c -ne $local) { $new[$f] = $c }
