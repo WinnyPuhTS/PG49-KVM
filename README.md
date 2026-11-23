@@ -44,5 +44,5 @@ Found by reverse engineering firmware MCM107 (Realtek RTD2738, MIPS16):
 - Auto mode (`0xF3=1`) switches to USB-C on input change but does not come back while
   the notebook stays connected, so it is not used.
 
-Requirements: DDC/CI enabled in the OSD, Windows PowerShell 5.1. Tested on the PC;
-the notebook side uses the same DDC path over USB-C and is not yet tested.
+Requirements: DDC/CI enabled in the OSD, Windows PowerShell 5.1. Tested on both
+sides: the PC (DP + USB-B) and the notebook (DDC over the USB-C cable).
